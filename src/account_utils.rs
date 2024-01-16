@@ -1,7 +1,7 @@
-use rand::Rng;
-use rsa::{RsaPrivateKey, RsaPublicKey, traits::PrivateKeyParts, traits::PublicKeyParts, BigUint};
-use hex;
 use byteorder::{ByteOrder, LittleEndian};
+use hex;
+use rand::Rng;
+use rsa::{BigUint, RsaPrivateKey, RsaPublicKey, traits::PrivateKeyParts, traits::PublicKeyParts};
 
 pub fn generate_priv_key() -> RsaPrivateKey {
     let mut rng = rand::thread_rng();
@@ -21,33 +21,41 @@ pub fn pub_key_to_hex(pub_key: &RsaPublicKey) -> String {
     format!("{:0>32x}", pub_key.n())
 }
 
-pub fn hex_to_priv_key(hex_str: &String) -> Result<RsaPrivateKey, rsa::Error> {
-    let n_o = hex::decode(&hex_str).expect("Hex to private key conversion failed");
-    let n: [u8; 16];
-    let n: BigUint = BigUint::from_bytes_be(&n_o) >> 128;
+pub fn hex_to_priv_key(hex_str: &String) -> Option<RsaPrivateKey> {
+    if let Ok(bytes) = hex::decode(&hex_str) {
+        let n: [u8; 16];
+        let n: BigUint = BigUint::from_bytes_be(&bytes) >> 128;
+    
+        let e: BigUint = BigUint::from(65537u32);
 
-    let e: BigUint = BigUint::from(65537u32);
+        let d: [u8; 16];
+        let big128: BigUint = BigUint::from(1u32) << 128;
+        let d: BigUint = BigUint::from_bytes_be(&bytes) % big128;
 
-    let d_o = hex::decode(&hex_str).expect("Hex to private key conversion failed");
-    let d: [u8; 16];
-    let big128: BigUint = BigUint::from(1u32) << 128;
-    let d: BigUint = BigUint::from_bytes_be(&d_o) % big128;
+        let primes: Vec<BigUint> = Vec::new();
 
-    let primes: Vec<BigUint> = Vec::new();
-    RsaPrivateKey::from_components(
-        n,
-        e,
-        d,
-        primes
-    )
+        match RsaPrivateKey::from_components(
+            n,
+            e,
+            d,
+            primes
+        ) {
+            Ok(key) => Some(key),
+            Err(_) => None
+        }
+    } else { None }
 }
 
-pub fn hex_to_pub_key(hex_str: &String) -> Result<RsaPublicKey, rsa::Error> {
-    let n_o = hex::decode(&hex_str).expect("Hex to public key conversion failed");
-    let n: [u8; 16];
-    let n: BigUint = BigUint::from_bytes_be(&n_o);
+pub fn hex_to_pub_key(hex_str: &String) -> Option<RsaPublicKey> {
+    if let Ok(bytes) = hex::decode(&hex_str) {
+        let n: [u8; 16];
+        let n: BigUint = BigUint::from_bytes_be(&bytes);
 
-    let e: BigUint = BigUint::from(65537u32);
+        let e: BigUint = BigUint::from(65537u32);
 
-    RsaPublicKey::new(n, e)
+        match RsaPublicKey::new(n, e) {
+            Ok(key) => Some(key),
+            Err(_) => None
+        }
+    } else { None }
 }
