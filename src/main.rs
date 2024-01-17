@@ -1,3 +1,4 @@
+use std::net::{IpAddr, Ipv4Addr};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
@@ -6,6 +7,7 @@ mod block_utils;
 use block_utils::Block;
 
 mod account_utils;
+mod peers;
 // use account_utils;
 
 mod transaction_utils;
@@ -52,4 +54,17 @@ fn main() {
     // println!("{}", genesis.to_json());
     // println!("{:#?}", genesis.generate_hash());
 
+    // Test peers.rs code
+    let mut peers = peers::Peers::new();
+    println!("Original known peers: {:#?}", peers);
+    println!("Requesting known peers: {:#?}", peers.get_known_peers(IpAddr::V4(Ipv4Addr::new(70, 116, 167, 167))));
+    println!("Known peers now: {:#?}", peers);
+    println!("Requesting known peers again: {:#?}", peers.get_known_peers(IpAddr::V4(Ipv4Addr::new(204, 14, 12, 61))));
+    println!("Requesting known peers again: {:#?}", peers.get_known_peers(IpAddr::V4(Ipv4Addr::new(188, 80, 225, 31))));
+    println!("Known peers now: {:#?}", peers);
+    println!("Saving to known_peers.txt...");
+    peers.save_known_peers();
+    println!("Saved.\nReloading known peers...");
+    peers.load_known_peers();
+    println!("Successfully loaded. Known peers now: {:#?}", peers);
 }
