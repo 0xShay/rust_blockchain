@@ -5,23 +5,17 @@ use sha256;
 
 use crate::account_utils;
 
+const DIFFICULTY: usize = 8; // number of zeros needed to prefix hash
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Block {
 
+    index: u32,
+    timestamp: u32, // timestamp in seconds since 1970-01-01 00:00 UTC (epoch)
+    transactions: String, // JSON data for all transactions
+    previous: String, // hash for the previous block
+    nonce: u32,
     hash: String,
-    height: i32, // current block height
-
-    send_pub_key: String, // sender public key
-    recv_pub_key: String, // receiver public key
-    amount: i32, // amount to send (deduct) from sender account
-    balance: i32, // resulting balance of sender account after amount deduction
-
-    signature: String, // signature
-
-    previous: String, // previous block hash
-    local_timestamp: i32, // timestamp of block
-
-    work: i32,
 
 }
 
@@ -35,47 +29,38 @@ impl Block {
         serde_json::to_string(self).expect("Error serializing block JSON")
     }
     
-    pub fn generate_genesis_block(priv_key: &RsaPrivateKey) -> Block {
-        let priv_key: RsaPrivateKey = account_utils::generate_priv_key();
-        let priv_key_hex: String = account_utils::priv_key_to_hex(&priv_key);
-        let pub_key: RsaPublicKey = account_utils::generate_pub_key(&priv_key);
-        let pub_key_hex: String = account_utils::pub_key_to_hex(&pub_key);
+    pub fn generate_genesis_block() -> Block {
         let mut genesis = Block {
-            hash: sha256::digest("rust_blockchain"),
-            height: 0,
-            send_pub_key: pub_key_hex.clone(),
-            recv_pub_key: pub_key_hex.clone(),
-            amount: 0,
-            balance: 100,
-            signature: String::from("genesis"),
+            index: 0,
+            timestamp: 0,
+            transactions: String::from("[]"),
             previous: String::from("0000000000000000000000000000000000000000000000000000000000000000"),
-            local_timestamp: 0,
-            work: 0
+            nonce: 0,
+            hash: String::from("0000000000000000000000000000000000000000000000000000000000000000"),        
         };
-        genesis.hash = genesis.generate_hash();
-        genesis.work = Block::generate_work(&genesis.hash).expect("Work generation for genesis hash failed");
+        genesis.nonce = crate::block_utils::Block::generate_work(&mut genesis).expect("Genesis work generation failed");
+        genesis.hash = crate::block_utils::Block::generate_hash(&genesis);
         genesis
     }
-    
-    pub fn generate_hash(&self) -> String {
+
+    pub fn generate_hash(block: &Block) -> String {
         sha256::digest(format!(
-            "{} {} {} {} {} {} {} {}",
-            self.hash,
-            self.height,
-            self.send_pub_key,
-            self.recv_pub_key,
-            self.amount,
-            self.balance,
-            self.signature,
-            self.previous
+            "{}{}{}{}{}",
+            block.index,
+            block.timestamp,
+            block.transactions,
+            block.previous,
+            block.nonce
         ))
     }
 
-    pub fn generate_work(block_hash: &str) -> Option<i32> {
-        for nonce in 1.. {
-            let hash: String = sha256::digest(format!("{}{}", nonce, block_hash));
-            match &hash[..4] {
-                "0000" => return Some(nonce),
+    pub fn generate_work(block: &mut Block) -> Option<u32> {
+        for nonce in 0.. {
+            block.nonce = nonce;
+            let hash = Block::generate_hash(block);
+            let prefix: String = "0".repeat(DIFFICULTY);
+            match &hash[..DIFFICULTY] {
+                p if p == prefix => return Some(nonce),
                 _ => continue,
             };
         };
