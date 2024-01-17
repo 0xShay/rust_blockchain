@@ -1,11 +1,10 @@
-use rsa::{BigUint, RsaPrivateKey, RsaPublicKey, traits::PrivateKeyParts, traits::PublicKeyParts};
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
 use sha256;
 
 use crate::account_utils;
 
-const DIFFICULTY: usize = 8; // number of zeros needed to prefix hash
+const DIFFICULTY: usize = 3; // number of zeros needed to prefix hash
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Block {
@@ -65,6 +64,21 @@ impl Block {
             };
         };
         None
+    }
+
+    pub fn verify_block_is_valid(block: &Block) -> bool {
+        // check if the previous block exists and is a valid block
+
+        // check that the timestamp of the block is greater than that of the previous block and less than an hour into the future
+
+        // verify that work (nonce) is valid
+
+        // with the ordered transaction list, loop through and ensure that no balances go into negative
+
+        // add a "block reward" transaction to the transaction list
+
+        // return true
+        true
     }
 
 }

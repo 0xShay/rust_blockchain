@@ -1,61 +1,52 @@
-use byteorder::{ByteOrder, LittleEndian};
+use rand::rngs::OsRng;
+use std::cmp;
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use hex;
-use rand::Rng;
-use rsa::{BigUint, RsaPrivateKey, RsaPublicKey, traits::PrivateKeyParts, traits::PublicKeyParts};
+use arrayref::array_ref;
 
-pub fn generate_priv_key() -> RsaPrivateKey {
-    let mut rng = rand::thread_rng();
-    let bits = 128;
-    RsaPrivateKey::new(&mut rng, bits).expect("Key generation failed")
+use crate::transaction_utils;
+
+pub fn generate_priv_key() -> SigningKey {
+    let mut csprng = OsRng;
+    let private_key: SigningKey = SigningKey::generate(&mut csprng);
+    private_key
 }
 
-pub fn generate_pub_key(priv_key: &RsaPrivateKey) -> RsaPublicKey {
-    RsaPublicKey::from(priv_key)
+pub fn generate_pub_key(private_key: &SigningKey) -> VerifyingKey {
+    let public_key: VerifyingKey = private_key.verifying_key();
+    public_key
 }
 
-pub fn priv_key_to_hex(priv_key: &RsaPrivateKey) -> String {
-    format!("{:0>32x}{:0>32x}", priv_key.n(), priv_key.d())
+pub fn priv_key_to_hex(private_key: &SigningKey) -> String { hex::encode(private_key.to_bytes()) }
+
+pub fn pub_key_to_hex(pub_key: &VerifyingKey) -> String { hex::encode(pub_key.to_bytes()) }
+
+pub fn signature_to_hex(signature: &Signature) -> String { hex::encode(signature.to_bytes()) }
+
+pub fn priv_key_from_hex(hex_str: &str) -> Result<SigningKey, Box<dyn std::error::Error>> {
+    let private_key_bytes: &[u8] = &hex::decode(hex_str)?;
+    let mut private_array: [u8; 32] = [0; 32];
+    private_array.copy_from_slice(&private_key_bytes);
+    let private_key = SigningKey::from_bytes(&private_array);
+    Ok(private_key)
 }
 
-pub fn pub_key_to_hex(pub_key: &RsaPublicKey) -> String {
-    format!("{:0>32x}", pub_key.n())
+pub fn pub_key_from_hex(hex_str: &str) -> Result<VerifyingKey, Box<dyn std::error::Error>> {
+    let public_key_bytes: &[u8] = &hex::decode(hex_str)?;
+    let mut public_array: [u8; 32] = [0; 32];
+    public_array.copy_from_slice(&public_key_bytes);
+    Ok(VerifyingKey::from_bytes(&public_array)?)
 }
 
-pub fn hex_to_priv_key(hex_str: &String) -> Option<RsaPrivateKey> {
-    if let Ok(bytes) = hex::decode(&hex_str) {
-        let n: [u8; 16];
-        let n: BigUint = BigUint::from_bytes_be(&bytes) >> 128;
-    
-        let e: BigUint = BigUint::from(65537u32);
-
-        let d: [u8; 16];
-        let big128: BigUint = BigUint::from(1u32) << 128;
-        let d: BigUint = BigUint::from_bytes_be(&bytes) % big128;
-
-        let primes: Vec<BigUint> = Vec::new();
-
-        match RsaPrivateKey::from_components(
-            n,
-            e,
-            d,
-            primes
-        ) {
-            Ok(key) => Some(key),
-            Err(_) => None
-        }
-    } else { None }
+pub fn signature_from_hex(hex_str: &str) -> Result<Signature, Box<dyn std::error::Error>> {
+    let sig_bytes: &[u8] = &hex::decode(hex_str)?;
+    let mut sig_array: [u8; 64] = [0; 64];
+    sig_array.copy_from_slice(&sig_bytes);
+    Ok(Signature::from_bytes(&sig_array))
 }
 
-pub fn hex_to_pub_key(hex_str: &String) -> Option<RsaPublicKey> {
-    if let Ok(bytes) = hex::decode(&hex_str) {
-        let n: [u8; 16];
-        let n: BigUint = BigUint::from_bytes_be(&bytes);
-
-        let e: BigUint = BigUint::from(65537u32);
-
-        match RsaPublicKey::new(n, e) {
-            Ok(key) => Some(key),
-            Err(_) => None
-        }
-    } else { None }
+pub fn sign_transaction(key: &SigningKey, tx: &transaction_utils::Transaction) -> String {
+    // NEEDS IMPLEMENTING
+    let signature: Signature = key.sign(transaction_utils::Transaction::generate_hash(&tx).as_bytes());
+    hex::encode(signature.to_bytes())
 }
