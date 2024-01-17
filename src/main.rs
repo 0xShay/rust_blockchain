@@ -27,9 +27,8 @@ fn main() {
     println!("---");
     println!("Generating genesis block...");
 
-    let genesis: Block = Block::generate_genesis_block(&priv_key);
+    let genesis: Block = Block::generate_genesis_block();
     println!("{:#?}", genesis);
-    println!("{}", genesis.generate_hash());
 
     // let genesis: Block = Block::generate_test_block();
     // println!("{:#?}", genesis);
