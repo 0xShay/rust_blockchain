@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
 use sha256;
+use num_bigint::BigUint;
 
 use crate::account_utils;
 
-const DIFFICULTY: usize = 3; // number of zeros needed to prefix hash
+const DIFFICULTY: usize = 8; // number of zeros needed to prefix hash (bits)
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Block {
@@ -57,11 +58,9 @@ impl Block {
         for nonce in 0.. {
             block.nonce = nonce;
             let hash = Block::generate_hash(block);
-            let prefix: String = "0".repeat(DIFFICULTY);
-            match &hash[..DIFFICULTY] {
-                p if p == prefix => return Some(nonce),
-                _ => continue,
-            };
+            let hash_bits = BigUint::parse_bytes(hash.as_bytes(), 16)?.to_radix_be(2);
+            let mut ctr: usize = 0;
+            if hash_bits.len() <= 256-DIFFICULTY { return Some(nonce) };
         };
         None
     }
