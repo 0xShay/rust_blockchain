@@ -1,4 +1,5 @@
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4};
+use std::str::FromStr;
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
@@ -8,6 +9,7 @@ use block_utils::Block;
 
 mod account_utils;
 mod peers;
+mod server;
 // use account_utils;
 
 mod transaction_utils;
@@ -57,14 +59,19 @@ fn main() {
     // Test peers.rs code
     let mut peers = peers::Peers::new();
     println!("Original known peers: {:#?}", peers);
-    println!("Requesting known peers: {:#?}", peers.get_known_peers(IpAddr::V4(Ipv4Addr::new(70, 116, 167, 167))));
+    println!("Requesting known peers: {:#?}", peers.get_known_peers(SocketAddr::from_str("70.116.167.167:7878").unwrap()));
     println!("Known peers now: {:#?}", peers);
-    println!("Requesting known peers again: {:#?}", peers.get_known_peers(IpAddr::V4(Ipv4Addr::new(204, 14, 12, 61))));
-    println!("Requesting known peers again: {:#?}", peers.get_known_peers(IpAddr::V4(Ipv4Addr::new(188, 80, 225, 31))));
+    println!("Requesting known peers again: {:#?}", peers.get_known_peers(SocketAddr::from_str("204.14.12.61:7878").unwrap()));
+    println!("Requesting known peers again: {:#?}", peers.get_known_peers(SocketAddr::from_str("188.80.225.31:7878").unwrap()));
+    // println!("Requesting known peers again: {:#?}", peers.get_known_peers(SocketAddr::from_str("3.67.112.102:10693").unwrap()));
     println!("Known peers now: {:#?}", peers);
     println!("Saving to known_peers.txt...");
     peers.save_known_peers();
     println!("Saved.\nReloading known peers...");
     peers.load_known_peers();
     println!("Successfully loaded. Known peers now: {:#?}", peers);
+
+    println!();
+    println!("Now testing the server code.");
+    server::Server::new().start_server();
 }

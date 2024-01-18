@@ -1,12 +1,13 @@
 use std::fs::File;
 use std::io::{Read, Write};
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::path::Path;
 use std::str::FromStr;
+use crate::server;
 
 #[derive(Debug)]
 pub struct Peers {
-    known_peers: Vec<IpAddr>
+    known_peers: Vec<SocketAddr>
 }
 
 impl Peers {
@@ -15,21 +16,35 @@ impl Peers {
             known_peers: Vec::new()
         }
     }
-}
-
-impl Peers<> {
-    pub fn get_known_peers(&mut self, peer_requested_by: IpAddr) -> Vec<IpAddr> {
-        let return_val: Vec<IpAddr> = self.known_peers.clone();
-        if !self.known_peers.contains(&&peer_requested_by) {
+    pub fn get_known_peers(&mut self, peer_requested_by: SocketAddr) -> Vec<SocketAddr> {
+        let return_val: Vec<SocketAddr> = self.known_peers.clone();
+        if !self.known_peers.contains(&&peer_requested_by) && !peer_requested_by.ip().is_loopback() {
             // New node has gone online, add it to known peers
             self.known_peers.push(peer_requested_by);
+            self.save_known_peers();
         }
         return_val
     }
 
     pub fn update_known_peers(&mut self) {
-        let new_known_peers: Vec<IpAddr> = self.known_peers.clone(); // TODO: Send request to each known peer
+        let mut new_known_peers: Vec<SocketAddr> = Vec::new();
+        let known_peers_copy = self.known_peers.clone();
+        for peer in known_peers_copy {
+            let ips = match server::Server::send_get_request(peer) {
+                Ok(response) => response.text().unwrap(),
+                Err(_) => {
+                    self.remove_ip(peer); // offline or invalid peer, remove from known peers
+                    continue;
+                }
+            };
+            for ip in ips[1..ips.len() - 1].split(",") {
+                new_known_peers.push(ip[1..ip.len() - 1].parse().unwrap());
+            }
+            new_known_peers.push(peer);
+            break;
+        }
         self.known_peers = new_known_peers;
+        self.save_known_peers();
     }
 
     pub fn save_known_peers(&self) {
@@ -58,5 +73,9 @@ impl Peers<> {
             if line.is_empty() { continue }
             self.known_peers.push(line.parse().expect("Could not convert to type IPAddr"));
         }
+    }
+
+    pub fn remove_ip(&mut self, ip_addr: SocketAddr) {
+        self.known_peers.retain(|&x| x != ip_addr);
     }
 }
