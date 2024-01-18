@@ -583,7 +583,6 @@ dependencies = [
 ]
 
 [[package]]
-
 name = "mio"
 version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -612,6 +611,7 @@ dependencies = [
  "tempfile",
 ]
 
+[[package]]
 name = "num-bigint"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
