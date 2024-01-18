@@ -2,6 +2,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::net::{IpAddr, SocketAddr, TcpListener, TcpStream};
 use std::thread;
 use reqwest::blocking::Response;
+use local_ip_address::local_ip;
 use crate::peers::Peers;
 
 pub struct Server {
@@ -20,7 +21,7 @@ impl Server {
         // TODO: get another client or two to test updating known peers
         // println!("Known peers after updating: {:#?}", self.peers_object);
 
-        let listener = TcpListener::bind("localhost:7878").unwrap();
+        let listener = TcpListener::bind(format!("{}:7000", local_ip().unwrap())).unwrap();
 
         for stream in listener.incoming() {
             let stream = stream.unwrap();
