@@ -68,7 +68,7 @@ impl Server {
     }
 
     pub fn send_get_request(addr_to: IpAddr) -> reqwest::Result<Response> {
-        reqwest::blocking::get(format!("http://{addr_to}:7878/"))
+        reqwest::blocking::get(format!("http://{addr_to}:10693/"))
     }
 
     pub fn send_post_request(addr_to: IpAddr) {
