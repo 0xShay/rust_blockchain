@@ -1,13 +1,13 @@
 use std::fs::File;
 use std::io::{Read, Write};
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::path::Path;
 use std::str::FromStr;
 use crate::server;
 
 #[derive(Debug)]
 pub struct Peers {
-    known_peers: Vec<IpAddr>
+    known_peers: Vec<SocketAddr>
 }
 
 impl Peers {
@@ -16,9 +16,9 @@ impl Peers {
             known_peers: Vec::new()
         }
     }
-    pub fn get_known_peers(&mut self, peer_requested_by: IpAddr) -> Vec<IpAddr> {
-        let return_val: Vec<IpAddr> = self.known_peers.clone();
-        if !self.known_peers.contains(&&peer_requested_by) && !peer_requested_by.is_loopback() {
+    pub fn get_known_peers(&mut self, peer_requested_by: SocketAddr) -> Vec<SocketAddr> {
+        let return_val: Vec<SocketAddr> = self.known_peers.clone();
+        if !self.known_peers.contains(&&peer_requested_by) && !peer_requested_by.ip().is_loopback() {
             // New node has gone online, add it to known peers
             self.known_peers.push(peer_requested_by);
             self.save_known_peers();
@@ -27,7 +27,7 @@ impl Peers {
     }
 
     pub fn update_known_peers(&mut self) {
-        let mut new_known_peers: Vec<IpAddr> = Vec::new();
+        let mut new_known_peers: Vec<SocketAddr> = Vec::new();
         let known_peers_copy = self.known_peers.clone();
         for peer in known_peers_copy {
             let ips = match server::Server::send_get_request(peer) {
@@ -75,7 +75,7 @@ impl Peers {
         }
     }
 
-    pub fn remove_ip(&mut self, ip_addr: IpAddr) {
+    pub fn remove_ip(&mut self, ip_addr: SocketAddr) {
         self.known_peers.retain(|&x| x != ip_addr);
     }
 }

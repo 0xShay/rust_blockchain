@@ -1,5 +1,5 @@
 use std::io::{BufRead, BufReader, Write};
-use std::net::{IpAddr, TcpListener, TcpStream};
+use std::net::{IpAddr, SocketAddr, TcpListener, TcpStream};
 use std::thread;
 use reqwest::blocking::Response;
 use crate::peers::Peers;
@@ -42,23 +42,23 @@ impl Server {
             .collect();
 
         println!("Request: {:#?}", http_request);
-        println!("IP Address of requester: {}", stream.local_addr().unwrap());
+        println!("IP Address of requester: {}", stream.peer_addr().unwrap());
 
         if http_request.get(0).is_none() {
-            self.peers_object.remove_ip(stream.local_addr().unwrap().ip());
+            self.peers_object.remove_ip(stream.peer_addr().unwrap());
         }
         else {
             match String::from(&http_request.get(0).unwrap()[..4]).as_str() {
                 "GET " => {self.handle_get(stream)}
                 "POST" => {self.handle_post(stream)}
-                _ => {self.peers_object.remove_ip(stream.local_addr().unwrap().ip())}
+                _ => {self.peers_object.remove_ip(stream.peer_addr().unwrap())}
             }
         }
 
     }
     
     pub fn handle_get(&mut self, mut stream: TcpStream) {
-        let response = serde_json::to_string(&self.peers_object.get_known_peers(stream.local_addr().unwrap().ip())).expect("Could not serialise known peers array.");
+        let response = serde_json::to_string(&self.peers_object.get_known_peers(stream.local_addr().unwrap())).expect("Could not serialise known peers array.");
         let response_str = format!("HTTP/1.1 200 OK\r\n\r\n{}", response);
         stream.write_all(response_str.as_bytes()).unwrap();
     }
@@ -67,8 +67,8 @@ impl Server {
         // broadcast has occurred, TODO: implement adding block
     }
 
-    pub fn send_get_request(addr_to: IpAddr) -> reqwest::Result<Response> {
-        reqwest::blocking::get(format!("http://{addr_to}:10693/"))
+    pub fn send_get_request(addr_to: SocketAddr) -> reqwest::Result<Response> {
+        reqwest::blocking::get(format!("http://{addr_to}/"))
     }
 
     pub fn send_post_request(addr_to: IpAddr) {
