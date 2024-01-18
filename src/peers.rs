@@ -18,9 +18,10 @@ impl Peers {
     }
     pub fn get_known_peers(&mut self, peer_requested_by: IpAddr) -> Vec<IpAddr> {
         let return_val: Vec<IpAddr> = self.known_peers.clone();
-        if !self.known_peers.contains(&&peer_requested_by) {
+        if !self.known_peers.contains(&&peer_requested_by) && !peer_requested_by.is_loopback() {
             // New node has gone online, add it to known peers
             self.known_peers.push(peer_requested_by);
+            self.save_known_peers();
         }
         return_val
     }
@@ -39,8 +40,11 @@ impl Peers {
             for ip in ips[1..ips.len() - 1].split(",") {
                 new_known_peers.push(ip[1..ip.len() - 1].parse().unwrap());
             }
+            new_known_peers.push(peer);
+            break;
         }
         self.known_peers = new_known_peers;
+        self.save_known_peers();
     }
 
     pub fn save_known_peers(&self) {
