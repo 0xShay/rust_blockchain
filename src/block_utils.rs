@@ -12,7 +12,7 @@ pub struct Block {
 
     index: u32,
     timestamp: u32, // timestamp in seconds since 1970-01-01 00:00 UTC (epoch)
-    transactions: String, // JSON data for all transactions
+    data: String, // JSON data for all transactions
     previous: String, // hash for the previous block
     nonce: u32,
     hash: String,
@@ -33,7 +33,7 @@ impl Block {
         let mut genesis = Block {
             index: 0,
             timestamp: 0,
-            transactions: String::from("[]"),
+            data: String::from("[]"),
             previous: String::from("0000000000000000000000000000000000000000000000000000000000000000"),
             nonce: 0,
             hash: String::from("0000000000000000000000000000000000000000000000000000000000000000"),        
@@ -48,7 +48,7 @@ impl Block {
             "{}{}{}{}{}",
             block.index,
             block.timestamp,
-            block.transactions,
+            block.data,
             block.previous,
             block.nonce
         ))
@@ -74,7 +74,7 @@ impl Block {
 
         // with the ordered transaction list, loop through and ensure that no balances go into negative
 
-        // add a "block reward" transaction to the transaction list
+        // add a "block reward" action to the transaction list
 
         // return true
         true
