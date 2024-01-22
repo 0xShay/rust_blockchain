@@ -22,6 +22,11 @@ impl Transaction {
         serde_json::from_str(json).expect("Error deserializing transaction JSON")
     }
 
+    pub fn vec_from_json(json: &str) -> Vec<Self> {
+        let json: Vec<Self> = serde_json::from_str(json).expect("Error deserializing transaction list JSON");
+        json
+    }
+
     pub fn to_json(&self) -> String {
         serde_json::to_string(self).expect("Error serializing transaction JSON")
     }
