@@ -18,3 +18,4 @@ serde_json = "1.0.111"
 sha256 = "1.5.0"
 reqwest = { version = "0.11.23", features = ["blocking"] }
 local-ip-address = "0.5.6"
+sqlite = "0.32.0"
