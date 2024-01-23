@@ -62,7 +62,6 @@ impl Server {
     }
     
     pub fn handle_get(&mut self, mut stream: TcpStream) {
-        let response = serde_json::to_string(&self.peers_object.get_known_peers(stream.local_addr().unwrap())).expect("Could not serialise known peers array.");
         let response = serde_json::to_string(&self.peers_object.get_known_peers(stream.peer_addr().unwrap())).expect("Could not serialise known peers array.");
         let response_str = format!("HTTP/1.1 200 OK\r\n\r\n{}", response);
         stream.write_all(response_str.as_bytes()).unwrap();
