@@ -9,6 +9,9 @@ pub struct Server {
     peers_object: Peers
 }
 
+const port: u16 = 7000; // there are 2^16 - 1 different network ports, all unsigned integers
+// TODO: allow the port to be changed by client/wallet
+
 impl Server {
     pub fn new() -> Self{
         Server {
@@ -21,7 +24,7 @@ impl Server {
         // TODO: get another client or two to test updating known peers
         // println!("Known peers after updating: {:#?}", self.peers_object);
 
-        let listener = TcpListener::bind(format!("{}:7000", local_ip().unwrap())).unwrap();
+        let listener = TcpListener::bind(format!("{}:{}", local_ip().unwrap(), port)).unwrap();
 
         for stream in listener.incoming() {
             let stream = stream.unwrap();
@@ -59,7 +62,7 @@ impl Server {
     }
     
     pub fn handle_get(&mut self, mut stream: TcpStream) {
-        let response = serde_json::to_string(&self.peers_object.get_known_peers(stream.local_addr().unwrap())).expect("Could not serialise known peers array.");
+        let response = serde_json::to_string(&self.peers_object.get_known_peers(stream.peer_addr().unwrap())).expect("Could not serialise known peers array.");
         let response_str = format!("HTTP/1.1 200 OK\r\n\r\n{}", response);
         stream.write_all(response_str.as_bytes()).unwrap();
     }
@@ -69,7 +72,7 @@ impl Server {
     }
 
     pub fn send_get_request(addr_to: SocketAddr) -> reqwest::Result<Response> {
-        reqwest::blocking::get(format!("http://{addr_to}/"))
+        reqwest::blocking::Client::new().get(format!("http://{addr_to}/")).header("port", port).send()
     }
 
     pub fn send_post_request(addr_to: IpAddr) {
