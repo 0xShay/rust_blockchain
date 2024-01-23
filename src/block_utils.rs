@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 use sha256;
 use std::time::SystemTime;
 use num_bigint::BigUint;
 
-use crate::account_utils;
 use crate::db_utils;
 use crate::transaction_utils::Transaction;
 
@@ -115,6 +113,7 @@ impl Block {
         let secs_since_epoch = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
         match prev_block_option {
             Some(prev_block) => {
+                // not genesis
                 if !(block.timestamp > prev_block.timestamp) { return false; };
             },
             None => ()

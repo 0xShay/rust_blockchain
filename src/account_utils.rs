@@ -1,8 +1,6 @@
 use rand::rngs::OsRng;
-use std::cmp;
-use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use hex;
-use arrayref::array_ref;
 
 use crate::transaction_utils;
 

@@ -52,8 +52,19 @@ impl Transaction {
     }
 
     pub fn verify_transaction() -> bool {
+        // check sender public key is valid
+
+        // check recipient public key is valid
+
+        // check signature is valid
+
+        // check hash is valid
+
+        // check inputs = outputs
+
+        // check UTXOs (look up set)
+
         true
-        // NEEDS IMPLEMENTING
     }
 
     pub fn generate_hash(tx: &Transaction) -> String {
