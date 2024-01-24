@@ -77,6 +77,8 @@ fn post_block(block_json: String) -> status::Custom<content::RawJson<String>> {
 #[launch]
 fn rocket() -> _ {
 
+    db_utils::create_tables();
+
     let mut peers = peers::Peers::new();
 
     println!("Known peers: {:#?}", peers);
