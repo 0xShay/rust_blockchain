@@ -37,6 +37,28 @@ fn get_peers(remote_addr: SocketAddr) -> status::Custom<content::RawJson<String>
     status::Custom(Status::Accepted, content::RawJson(peers.to_json()))            
 }
 
+#[post("/publish_block", format="application/json", data="<block_json>")]
+fn post_block(block_json: String) -> status::Custom<content::RawJson<String>> {
+    match Block::from_json(&block_json) {
+        Ok(block) => {
+            if Block::verify_block_is_valid(&block) {
+                db_utils::add_block(block);
+                status::Custom(Status::Accepted, content::RawJson(block_json))
+            } else {
+                status::Custom(Status::BadRequest, content::RawJson(String::from("{
+                    \"error\": \"Block verification failed.\"
+                }")))
+            }
+        },
+        Err(err) => {
+            println!("{:?}", err);
+            status::Custom(Status::BadRequest, content::RawJson(String::from("{
+                \"error\": \"The supplied block JSON was malformed.\"
+            }")))
+        }
+    }
+}
+
 #[launch]
 fn rocket() -> _ {
 
