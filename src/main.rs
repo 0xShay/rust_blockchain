@@ -13,9 +13,6 @@ mod server;
 // use account_utils;
 mod db_utils;
 
-mod transaction_utils;
-use transaction_utils::Transaction;
-
 fn main() {
 
 
@@ -38,19 +35,6 @@ fn main() {
     let genesis: Block = Block::generate_genesis_block();
     println!("{:#?}", genesis);
     println!("{}", genesis.to_json());
-
-
-    println!("---");
-    println!("Generating transaction...");
-    let tx: Transaction = Transaction::new(
-        &pub_key_hex,
-        &pub_key_hex,
-        10,
-        10,
-        &priv_key_hex
-    ).expect("Generating transaction failed.");
-    println!("{:?}", tx);
-    
 
     // let genesis: Block = Block::generate_test_block();
     // println!("{:#?}", genesis);

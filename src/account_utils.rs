@@ -2,8 +2,6 @@ use rand::rngs::OsRng;
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use hex;
 
-use crate::transaction_utils;
-
 pub fn generate_priv_key() -> SigningKey {
     let mut csprng = OsRng;
     let private_key: SigningKey = SigningKey::generate(&mut csprng);
@@ -41,10 +39,4 @@ pub fn signature_from_hex(hex_str: &str) -> Result<Signature, Box<dyn std::error
     let mut sig_array: [u8; 64] = [0; 64];
     sig_array.copy_from_slice(&sig_bytes);
     Ok(Signature::from_bytes(&sig_array))
-}
-
-pub fn sign_transaction(key: &SigningKey, tx: &transaction_utils::Transaction) -> String {
-    // NEEDS IMPLEMENTING
-    let signature: Signature = key.sign(transaction_utils::Transaction::generate_hash(&tx).as_bytes());
-    hex::encode(signature.to_bytes())
 }

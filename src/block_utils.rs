@@ -4,7 +4,6 @@ use std::time::SystemTime;
 use num_bigint::BigUint;
 
 use crate::db_utils;
-use crate::transaction_utils::Transaction;
 
 const DIFFICULTY: usize = 8; // number of zeros needed to prefix hash (bits)
 
@@ -13,7 +12,7 @@ pub struct Block {
 
     pub index: u32,
     pub timestamp: u32, // timestamp in seconds since 1970-01-01 00:00 UTC (epoch)
-    pub transactions: Vec<Transaction>, // data for all transactions
+    pub data: String, // data encoded in blocks
     pub previous: String, // hash for the previous block
     pub nonce: u32,
     pub hash: String,
@@ -34,7 +33,7 @@ impl Block {
         let mut genesis = Block {
             index: 0,
             timestamp: 0,
-            transactions: Vec::new(),
+            data: String::from(""),
             previous: String::from("0000000000000000000000000000000000000000000000000000000000000000"),
             nonce: 0,
             hash: String::from("0000000000000000000000000000000000000000000000000000000000000000"),        
@@ -47,7 +46,7 @@ impl Block {
     pub fn create_block(
         index: u32,
         timestamp: u32,
-        transactions: Vec<Transaction>,
+        data: String,
         previous: String,
         nonce: u32,
         hash: String
@@ -55,7 +54,7 @@ impl Block {
         Block {
             index,
             timestamp,
-            transactions,
+            data,
             previous,
             nonce,
             hash,        
@@ -63,22 +62,14 @@ impl Block {
     }
 
     pub fn generate_hash(block: &Block) -> String {
-        let mut tx_hash_concat: String = String::new();
-        for tx in &block.transactions {
-            tx_hash_concat += &Transaction::generate_hash(&tx);
-        };
         sha256::digest(format!(
             "{}{}{}{}{}",
             block.index,
             block.timestamp,
-            tx_hash_concat,
+            sha256::digest(&block.data),
             block.previous,
             block.nonce
         ))
-    }
-
-    pub fn generate_transactions_json(block: &Block) -> String {
-        serde_json::to_string(&block.transactions).expect("Error serializing block.transactions JSON")
     }
 
     pub fn generate_work(block: &mut Block) -> Option<u32> {
@@ -123,11 +114,6 @@ impl Block {
         // verify that work (nonce) is valid
         if !(Block::is_work_valid(block)) { return false; };
 
-        // with the ordered transaction list, loop through and ensure that no balances go into negative
-
-        // add a "block reward" action to the transaction list
-
-        // return true
         true
     }
 
