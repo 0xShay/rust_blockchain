@@ -61,3 +61,23 @@ pub fn get_block(hash: &str) -> Option<Block> {
         None
     }
 }
+
+pub fn get_frontier_block() -> Option<Block> {
+    println!("[💾] Getting frontier block from database");
+    let conn = get_connection();
+    let query = "SELECT * FROM blocks WHERE ix = (SELECT MAX(ix) FROM blocks) ORDER BY timestamp ASC;";
+    let mut statement = conn.prepare(query).unwrap();
+
+    if let Ok(sqlite::State::Row) = statement.next() {
+        Some(Block::create_block(
+            statement.read::<i64, _>("ix").unwrap().try_into().unwrap(),
+            statement.read::<i64, _>("timestamp").unwrap().try_into().unwrap(),
+            statement.read::<String, _>("data").unwrap().try_into().unwrap(),
+            statement.read::<String, _>("previous").unwrap(),
+            statement.read::<i64, _>("nonce").unwrap().try_into().unwrap(),
+            statement.read::<String, _>("hash").unwrap()
+        ))
+    } else {
+        None
+    }
+}
