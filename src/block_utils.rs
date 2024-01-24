@@ -87,6 +87,7 @@ impl Block {
         match prev_block_option {
             Some(prev_block) => {
                 // not genesis
+                if block.index-prev_block.index != 1 { return false; };
                 if !(block.timestamp > prev_block.timestamp) { return false; };
             },
             None => ()
