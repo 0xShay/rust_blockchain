@@ -16,8 +16,24 @@ mod account_utils;
 mod peers;
 mod db_utils;
 
-fn main() {
+#[get("/block/<hash>")]
+fn get_block(hash: &str) -> status::Custom<content::RawJson<String>> {
+    match db_utils::get_block(hash) {
+        Some(block) => {
+            let block_json: String = block.to_json();
+            status::Custom(Status::Accepted, content::RawJson(block_json))            
+        }
+        None => {
+            status::Custom(Status::NotFound, content::RawJson(String::from("{}")))
+        }
+    }
+}
 
+#[get("/peers")]
+fn get_peers(remote_addr: SocketAddr) -> status::Custom<content::RawJson<String>> {
+    let mut peers = peers::Peers::new();
+    status::Custom(Status::Accepted, content::RawJson(peers.to_json()))            
+}
 
 #[launch]
 fn rocket() -> _ {
