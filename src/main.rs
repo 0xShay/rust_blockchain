@@ -31,6 +31,21 @@ fn get_block(hash: &str) -> status::Custom<content::RawJson<String>> {
     }
 }
 
+#[get("/frontier_block")]
+fn get_frontier_block() -> status::Custom<content::RawJson<String>> {
+    match db_utils::get_frontier_block() {
+        Some(block) => {
+            let block_json: String = block.to_json();
+            status::Custom(Status::Accepted, content::RawJson(block_json))            
+        }
+        None => {
+            status::Custom(Status::NotFound, content::RawJson(String::from("{
+                \"error\": \"An error occurred querying the database.\"
+            }")))
+        }
+    }
+}
+
 #[get("/peers")]
 fn get_peers(remote_addr: SocketAddr) -> status::Custom<content::RawJson<String>> {
     let mut peers = peers::Peers::new();
@@ -78,7 +93,12 @@ fn rocket() -> _ {
             peers.update_known_peers().await;
         });
 
-    rocket::build().mount("/", routes![get_block, get_peers, post_block])
+    rocket::build().mount("/", routes![
+        get_block,
+        get_peers,
+        get_frontier_block,
+        post_block
+    ])
 
 }
 
