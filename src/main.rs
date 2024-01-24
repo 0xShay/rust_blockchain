@@ -24,7 +24,9 @@ fn get_block(hash: &str) -> status::Custom<content::RawJson<String>> {
             status::Custom(Status::Accepted, content::RawJson(block_json))            
         }
         None => {
-            status::Custom(Status::NotFound, content::RawJson(String::from("{}")))
+            status::Custom(Status::NotFound, content::RawJson(String::from("{
+                \"error\": \"A block with the given hash was not found in the database.\"
+            }")))
         }
     }
 }
