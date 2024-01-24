@@ -1,47 +1,60 @@
+use reqwest;
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::net::{IpAddr, SocketAddr};
 use std::path::Path;
 use std::str::FromStr;
-use crate::server;
+use std::time::Duration;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Peers {
     known_peers: Vec<SocketAddr>
 }
 
 impl Peers {
+
     pub fn new() -> Self {
-        Peers {
+        let mut peers: Peers = Peers {
             known_peers: Vec::new()
-        }
-    }
-    pub fn get_known_peers(&mut self, peer_requested_by: SocketAddr) -> Vec<SocketAddr> {
-        let return_val: Vec<SocketAddr> = self.known_peers.clone();
-        if !self.known_peers.contains(&&peer_requested_by) && !peer_requested_by.ip().is_loopback() {
-            // New node has gone online, add it to known peers
-            self.known_peers.push(peer_requested_by);
-            self.save_known_peers();
-        }
-        return_val
+        };
+        println!("Loading known peers from file...");
+        peers.load_known_peers();
+        peers
     }
 
-    pub fn update_known_peers(&mut self) {
+    pub fn from_json(json: &str) -> Vec<SocketAddr> {
+        serde_json::from_str(json).expect("Error deserializing peers JSON")
+    }
+
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(&self.known_peers).expect("Error serializing peers JSON")
+    }
+
+    pub fn get_known_peers(&mut self) -> Vec<SocketAddr> {
+        self.known_peers.clone()
+    }
+
+    pub async fn update_known_peers(&mut self) {
         let mut new_known_peers: Vec<SocketAddr> = Vec::new();
         let known_peers_copy = self.known_peers.clone();
-        for peer in known_peers_copy {
-            let ips = match server::Server::send_get_request(peer) {
-                Ok(response) => response.text().unwrap(),
-                Err(_) => {
-                    self.remove_ip(peer); // offline or invalid peer, remove from known peers
-                    continue;
+        let client_builder = reqwest::ClientBuilder::new().timeout(Duration::new(5, 0));
+        let client: reqwest::Client = client_builder.build().expect("Building client failed");
+        for peer in &known_peers_copy {
+            println!("{}", peer);
+            match client.get(format!("http://{}/peers", peer)).send().await {
+                Ok(mut response) => {
+                    // check if 200 OK
+                    if response.status() == reqwest::StatusCode::OK {
+                        println!("Request to peer {} OK", peer);
+                    } else {
+                        println!("Request to peer {} not OK", peer);
+                    }
+                },
+                Err(err) => {
+                    println!("Request to peer {} failed, {:?}", peer, err);
                 }
-            };
-            for ip in ips[1..ips.len() - 1].split(",") {
-                new_known_peers.push(ip[1..ip.len() - 1].parse().unwrap());
             }
-            new_known_peers.push(peer);
-            break;
         }
         self.known_peers = new_known_peers;
         self.save_known_peers();
@@ -77,5 +90,7 @@ impl Peers {
 
     pub fn remove_ip(&mut self, ip_addr: SocketAddr) {
         self.known_peers.retain(|&x| x != ip_addr);
+        self.save_known_peers();
     }
+
 }
