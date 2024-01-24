@@ -49,14 +49,14 @@ pub fn get_block(hash: &str) -> Option<Block> {
     statement.bind((1, hash)).unwrap();
 
     if let Ok(sqlite::State::Row) = statement.next() {
-        Some(Block::create_block(
-            statement.read::<i64, _>("ix").unwrap().try_into().unwrap(),
-            statement.read::<i64, _>("timestamp").unwrap().try_into().unwrap(),
-            statement.read::<String, _>("data").unwrap().try_into().unwrap(),
-            statement.read::<String, _>("previous").unwrap(),
-            statement.read::<i64, _>("nonce").unwrap().try_into().unwrap(),
-            statement.read::<String, _>("hash").unwrap()
-        ))
+        Some(Block {
+            index: statement.read::<i64, _>("ix").unwrap().try_into().unwrap(),
+            timestamp: statement.read::<i64, _>("timestamp").unwrap().try_into().unwrap(),
+            data: statement.read::<String, _>("data").unwrap().try_into().unwrap(),
+            previous: statement.read::<String, _>("previous").unwrap(),
+            nonce: statement.read::<i64, _>("nonce").unwrap().try_into().unwrap(),
+            hash: statement.read::<String, _>("hash").unwrap()
+        })
     } else {
         None
     }
@@ -69,14 +69,14 @@ pub fn get_frontier_block() -> Option<Block> {
     let mut statement = conn.prepare(query).unwrap();
 
     if let Ok(sqlite::State::Row) = statement.next() {
-        Some(Block::create_block(
-            statement.read::<i64, _>("ix").unwrap().try_into().unwrap(),
-            statement.read::<i64, _>("timestamp").unwrap().try_into().unwrap(),
-            statement.read::<String, _>("data").unwrap().try_into().unwrap(),
-            statement.read::<String, _>("previous").unwrap(),
-            statement.read::<i64, _>("nonce").unwrap().try_into().unwrap(),
-            statement.read::<String, _>("hash").unwrap()
-        ))
+        Some(Block {
+            index: statement.read::<i64, _>("ix").unwrap().try_into().unwrap(),
+            timestamp: statement.read::<i64, _>("timestamp").unwrap().try_into().unwrap(),
+            data: statement.read::<String, _>("data").unwrap().try_into().unwrap(),
+            previous: statement.read::<String, _>("previous").unwrap(),
+            nonce: statement.read::<i64, _>("nonce").unwrap().try_into().unwrap(),
+            hash: statement.read::<String, _>("hash").unwrap()
+        })
     } else {
         None
     }

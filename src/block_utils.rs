@@ -43,24 +43,6 @@ impl Block {
         genesis
     }
 
-    pub fn create_block(
-        index: u32,
-        timestamp: u32,
-        data: String,
-        previous: String,
-        nonce: u32,
-        hash: String
-    ) -> Block {
-        Block {
-            index,
-            timestamp,
-            data,
-            previous,
-            nonce,
-            hash,        
-        }
-    }
-
     pub fn generate_hash(block: &Block) -> String {
         sha256::digest(format!(
             "{}{}{}{}{}",
