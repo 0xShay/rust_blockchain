@@ -56,7 +56,7 @@ fn rocket() -> _ {
             peers.update_known_peers().await;
         });
 
-    rocket::build().mount("/", routes![])
+    rocket::build().mount("/", routes![get_block, get_peers, post_block])
 
 }
 
