@@ -97,6 +97,9 @@ impl Block {
         // verify that work (nonce) is valid
         if !(Block::is_work_valid(block)) { return false; };
 
+        // verify that hash is valid
+        if Block::generate_hash(block) != block.hash { return false; };
+
         true
     }
 
