@@ -20,3 +20,4 @@ reqwest = { version = "0.11.23", features = ["blocking"] }
 sqlite = "0.32.0"
 rocket = "0.5.0"
 tokio = { version = "1.35.1", features = ["full"] }
+lazy_static = "1.4.0"

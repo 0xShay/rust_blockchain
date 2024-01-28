@@ -1,13 +1,19 @@
 use sqlite;
+use lazy_static;
+use std::sync::{Mutex, Arc};
+use tokio::sync::OnceCell;
 use crate::block_utils::Block;
 
-fn get_connection() -> sqlite::Connection {
-    sqlite::open("db.sqlite").unwrap()
+lazy_static::lazy_static! {
+    static ref CONNECTION: Arc<Mutex<sqlite::Connection>> = {
+        let conn = sqlite::Connection::open("db.sqlite").unwrap();
+        Arc::new(Mutex::new(conn))
+    };
 }
 
 pub fn create_tables() -> Result<(), sqlite::Error> {
     println!("[💾] Creating database tables (if they don't already exist)");
-    let conn = get_connection();
+    let conn = CONNECTION.lock().unwrap(); 
     conn.execute("CREATE TABLE IF NOT EXISTS blocks (
         ix INTEGER NOT NULL,
         timestamp INTEGER NOT NULL,
@@ -21,7 +27,7 @@ pub fn create_tables() -> Result<(), sqlite::Error> {
 
 pub fn add_block(block: Block) -> Result<(), sqlite::Error> {
     println!("[💾] Adding block {:?} to database", block);
-    let conn = get_connection();
+    let conn = CONNECTION.lock().unwrap(); 
     let query = "INSERT INTO blocks (
         ix, timestamp, data, previous, nonce, hash
     ) VALUES (
@@ -43,7 +49,7 @@ pub fn add_block(block: Block) -> Result<(), sqlite::Error> {
 
 pub fn get_block(hash: &str) -> Option<Block> {
     println!("[💾] Getting block {:?} from database", hash);
-    let conn = get_connection();
+    let conn = CONNECTION.lock().unwrap(); 
     let query = "SELECT * FROM blocks WHERE hash = ?";
     let mut statement = conn.prepare(query).unwrap();
     statement.bind((1, hash)).unwrap();
@@ -64,7 +70,7 @@ pub fn get_block(hash: &str) -> Option<Block> {
 
 pub fn get_frontier_block() -> Option<Block> {
     println!("[💾] Getting frontier block from database");
-    let conn = get_connection();
+    let conn = CONNECTION.lock().unwrap(); 
     let query = "SELECT * FROM blocks WHERE ix = (SELECT MAX(ix) FROM blocks) ORDER BY timestamp ASC;";
     let mut statement = conn.prepare(query).unwrap();
 

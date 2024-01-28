@@ -1395,6 +1395,7 @@ dependencies = [
  "byteorder",
  "ed25519-dalek",
  "hex",
+ "lazy_static",
  "num-bigint",
  "rand",
  "reqwest",
