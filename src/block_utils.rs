@@ -16,6 +16,8 @@ pub struct Block {
     pub previous: String, // hash for the previous block
     pub nonce: u32,
     pub hash: String,
+    pub diff_bits: u32,
+    pub acc_diff: u32
 
 }
 
@@ -37,6 +39,8 @@ impl Block {
             previous: String::from("0000000000000000000000000000000000000000000000000000000000000000"),
             nonce: 0,
             hash: String::from("0000000000000000000000000000000000000000000000000000000000000000"),        
+            diff_bits: 1,
+            acc_diff: 2
         };
         genesis.nonce = crate::block_utils::Block::generate_work(&mut genesis).expect("Genesis work generation failed");
         genesis.hash = crate::block_utils::Block::generate_hash(&genesis);
@@ -67,7 +71,7 @@ impl Block {
         match BigUint::parse_bytes(hash.as_bytes(), 16) {
             Some(parsed_bytes) => {
                 let hash_bits = parsed_bytes.to_radix_be(2);
-                hash_bits.len() <= 256-DIFFICULTY
+                hash_bits.len() <= 256-(block.diff_bits as usize)
             },
             None => false
         }
@@ -101,6 +105,23 @@ impl Block {
         if Block::generate_hash(block) != block.hash { return false; };
 
         true
+    }
+
+    pub fn add_acc_diff_to_block(mut block: Block) -> Block {
+        let is_genesis = block.index == 0;
+        let prev_block_option: Option<Block> = db_utils::get_block(&block.previous);
+
+        match prev_block_option {
+            Some(prev_block) => {
+                println!("{} | {}", prev_block.acc_diff, block.diff_bits);
+                block.acc_diff = prev_block.acc_diff + (2 as u32).pow(block.diff_bits);
+            },
+            None => {
+                block.acc_diff = (2 as u32).pow(block.diff_bits);
+            }
+        };
+
+        block
     }
 
 }

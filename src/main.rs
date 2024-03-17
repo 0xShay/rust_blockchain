@@ -57,7 +57,7 @@ fn post_block(block_json: String) -> status::Custom<content::RawJson<String>> {
     match Block::from_json(&block_json) {
         Ok(block) => {
             if Block::verify_block_is_valid(&block) {
-                db_utils::add_block(block);
+                db_utils::add_block(Block::add_acc_diff_to_block(block));
                 status::Custom(Status::Accepted, content::RawJson(block_json))
             } else {
                 status::Custom(Status::BadRequest, content::RawJson(String::from("{
@@ -94,6 +94,18 @@ fn rocket() -> _ {
         .block_on(async {
             peers.update_known_peers().await;
         });
+
+    println!("---");
+    println!("Generating genesis block...");
+
+    let genesis: Block = Block::generate_genesis_block();
+    println!("{:#?}", genesis);
+    println!("{}", genesis.to_json());
+
+    db_utils::add_block(genesis);
+
+    // check peers to see if frontier block index > local block index,
+        // if so, fetch blocks sequentially and verify each block before appending to db
 
     rocket::build().mount("/", routes![
         get_block,

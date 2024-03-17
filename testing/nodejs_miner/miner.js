@@ -37,7 +37,9 @@ async function mineNewBlock(data) {
             "data": data,
             "previous": lb.hash,
             "nonce": 0,
-            "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+            "hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "diff_bits": DIFFICULTY,
+            "acc_diff": 0
         };
     
         let dataHash = sha256.create();

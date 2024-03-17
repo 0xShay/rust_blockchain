@@ -20,7 +20,9 @@ pub fn create_tables() -> Result<(), sqlite::Error> {
         data TEXT NOT NULL,
         previous TEXT NOT NULL,
         nonce INTEGER NOT NULL,
-        hash TEXT PRIMARY KEY NOT NULL
+        hash TEXT PRIMARY KEY NOT NULL,
+        diff_bits INTEGER NOT NULL,
+        acc_diff INTEGER NOT NULL
     );").unwrap();
     Ok(())
 }
@@ -29,9 +31,9 @@ pub fn add_block(block: Block) -> Result<(), sqlite::Error> {
     println!("[💾] Adding block {:?} to database", block);
     let conn = CONNECTION.lock().unwrap(); 
     let query = "INSERT INTO blocks (
-        ix, timestamp, data, previous, nonce, hash
+        ix, timestamp, data, previous, nonce, hash, diff_bits, acc_diff
     ) VALUES (
-        ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?
     );";
     let mut statement = conn.prepare(query).unwrap();
     statement.bind::<&[(_, sqlite::Value)]>(&[
@@ -40,7 +42,9 @@ pub fn add_block(block: Block) -> Result<(), sqlite::Error> {
         (3, block.data.into()),
         (4, block.previous.into()),
         (5, (block.nonce as i64).into()),
-        (6, block.hash.into())
+        (6, block.hash.into()),
+        (7, (block.diff_bits as i64).into()),
+        (8, (block.acc_diff as i64).into())
     ]).unwrap();
     statement.next();
 
@@ -61,7 +65,9 @@ pub fn get_block(hash: &str) -> Option<Block> {
             data: statement.read::<String, _>("data").unwrap().try_into().unwrap(),
             previous: statement.read::<String, _>("previous").unwrap(),
             nonce: statement.read::<i64, _>("nonce").unwrap().try_into().unwrap(),
-            hash: statement.read::<String, _>("hash").unwrap()
+            hash: statement.read::<String, _>("hash").unwrap(),
+            diff_bits: statement.read::<i64, _>("diff_bits").unwrap().try_into().unwrap(),
+            acc_diff: statement.read::<i64, _>("acc_diff").unwrap().try_into().unwrap()
         })
     } else {
         None
@@ -71,7 +77,7 @@ pub fn get_block(hash: &str) -> Option<Block> {
 pub fn get_frontier_block() -> Option<Block> {
     println!("[💾] Getting frontier block from database");
     let conn = CONNECTION.lock().unwrap(); 
-    let query = "SELECT * FROM blocks WHERE ix = (SELECT MAX(ix) FROM blocks) ORDER BY timestamp ASC;";
+    let query = "SELECT * FROM blocks WHERE acc_diff = (SELECT MAX(acc_diff) FROM blocks) ORDER BY timestamp ASC;";
     let mut statement = conn.prepare(query).unwrap();
 
     if let Ok(sqlite::State::Row) = statement.next() {
@@ -81,7 +87,9 @@ pub fn get_frontier_block() -> Option<Block> {
             data: statement.read::<String, _>("data").unwrap().try_into().unwrap(),
             previous: statement.read::<String, _>("previous").unwrap(),
             nonce: statement.read::<i64, _>("nonce").unwrap().try_into().unwrap(),
-            hash: statement.read::<String, _>("hash").unwrap()
+            hash: statement.read::<String, _>("hash").unwrap(),
+            diff_bits: statement.read::<i64, _>("diff_bits").unwrap().try_into().unwrap(),
+            acc_diff: statement.read::<i64, _>("acc_diff").unwrap().try_into().unwrap()
         })
     } else {
         None
